@@ -1,52 +1,30 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from movie_app.models import Movie, Director, Review
-from movie_app.serializers import MovieSerializers, DirectorSerializers, ReviewSerializers
-from rest_framework import status
+from rest_framework.viewsets import ModelViewSet
+from .serializers import *
+from .models import *
+
+
 # Create your views here.
+class DirectorViewSet(ModelViewSet):
+    serializer_class = DirectorSerializer
+    queryset = Director.objects.all()
+    authentication_classes = [IsAuthenticatedOrReadOnly]
 
 
-@api_view(['GET'])
-def movie_view(request):
-    if request.method == 'GET':
-        movies = Movie.objects.all()
-        serializer = MovieSerializers(movies, many=True)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+class MovieViewSet(ModelViewSet):
+    queryset = Movie.objects.all()
+    serializer_class = MovieSerializer
+    permission_classes = IsAuthenticatedOrReadOnly
 
-@api_view(['GET'])
-def movie_detail_view(request, **kwargs):
-    if request.method == 'GET':
-        movie = Movie.objects.get(id=kwargs['id'])
+    @action(['GET'], detail=False)
+    def reviews(self, request, *args, **kwargs):
+        serializer = MoviesReviewsSerializer(self.get_queryset(), many=True)
+        return Response(data=serializer.data)
 
-        serializer = MovieSerializers(movie, many=False)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-@api_view(['GET'])
-def director_view(request):
-    if request.method == 'GET':
-        directors = Director.objects.all()
-        serializer = DirectorSerializers(directors, many=True)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['GET'])
-def director_detail_view(request, **kwargs):
-    if request.method == 'GET':
-        director = Director.objects.get(id=kwargs['id'])
-
-        serializer = DirectorSerializers(director, many=False)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['GET'])
-def review_view(request):
-    if request.method == 'GET':
-        reviews = Review.objects.all()
-        serializer = ReviewSerializers(reviews, many=True)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
-
-@api_view(['GET'])
-def review_detail_view(request, **kwargs):
-    if request.method == 'GET':
-        review = Review.objects.get(id=kwargs['id'])
-
-        serializer = ReviewSerializers(review, many=False)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+class ReviewViewSet(ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
